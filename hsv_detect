@@ -1,4 +1,5 @@
-# script for detecting colours with OpenCV using HSV (Hue, Saturation, Value)
+# script for identifying the hsv values of a colour using OpenCV HSV (Hue, Saturation, Value)
+# use the sliders to detect the colour being tested 
 # credits https://www.youtube.com/watch?v=AMFhjir4WgQ
 
 import cv2
@@ -23,6 +24,7 @@ cv2.createTrackbar("U-V", "Trackbars", 255, 255, nothing)
 
 while True:
     _, frame = cap.read() # read each video frame
+    #cv2.imshow('Trackbars', frame)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # converts BGR colour to HSV
 
     l_h = cv2.getTrackbarPos("L-H", "Trackbars")
@@ -39,7 +41,12 @@ while True:
     mask = cv2.inRange(hsv, lower_red, upper_red) # identify red in frame
 
     #cv2.imshow("Frame", frame) # opens a window to show original video being captured
+
+
     resize = cv2.resize(mask, (960, 540))
+    # draw on image
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(resize, 'Colour Detection', (10, 500), font, 2, (0, 255, 255), 2, cv2.LINE_AA)
     cv2.imshow("Mask", resize) # opens a window to show the mask
 
     key = cv2.waitKey(1)
@@ -53,12 +60,11 @@ while True:
     #u_s = ("u_s", u_s)
     #u_v = ("u_v", u_v)
 
-    # print HSV values to a text file
-    red = str([l_h, l_s, l_v, u_h, u_s, u_v])
-    f = open("red.txt", "w")
-    f.write(red)
+    # print HSV values to a text file called hsv
+    hsv = str([l_h, l_s, l_v, u_h, u_s, u_v])
+    f = open("hsv.txt", "w")
+    f.write(hsv)
     f.close()
-
 
 
 cap.release()
