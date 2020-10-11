@@ -46,5 +46,20 @@ while True:
     if key == 27:
         break
 
+    #l_h = ("l_h", l_h)
+    #l_s = ("l_s", l_s)
+    #l_v = ("l_v", l_v)
+    #u_h = ("u_h", u_h)
+    #u_s = ("u_s", u_s)
+    #u_v = ("u_v", u_v)
+
+    # print HSV values to a text file
+    red = str([l_h, l_s, l_v, u_h, u_s, u_v])
+    f = open("red.txt", "w")
+    f.write(red)
+    f.close()
+
+
+
 cap.release()
 cv2.destroyAllWindows()
