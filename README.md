@@ -1,3 +1,5 @@
-# Barum_Jam
-Created as repository to host, share and test code for tyhe Barum Pi Jam PiWars 2021 entry (if we get in :-) )
-
+# Tidy_Up_The_Toys PiWars 2021
+The object of this challenge is to collect three different coloured
+blocks and deposit them in a target area.
+To gain maximum points, the aim will be to tackle this challenge 
+using computer vision with Python OpenCV.
