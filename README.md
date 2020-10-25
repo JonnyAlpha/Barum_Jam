@@ -7,3 +7,4 @@ using computer vision with Python OpenCV.
 # Note on files
 
 multicolour_detect.py - script used to calibrate hsv detection
+hsv_detect.py - script to calibrate hsv detection
