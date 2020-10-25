@@ -1,4 +1,4 @@
-# script to detect multiple colours using sliders
+# script used to find HSV levels to detect multiple colours using sliders
 # credits: https://www.youtube.com/watch?v=3D7O_kZi8-o
 
 import cv2
