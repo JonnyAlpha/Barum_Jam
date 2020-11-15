@@ -20,14 +20,6 @@ def main():
         #find_red(frame)
         #find_green(frame)
 
-        # distance
-        # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
-        KNOWN_DISTANCE = 100
-
-        # initialise the know object width, which is 50mm or 1.968504 inches
-        KNOWN_WIDTH = 0.5
-
-        # read the first frames to find
 
         # output the results in windows
         cv2.imshow("frame", frame)
@@ -62,26 +54,35 @@ def find_blue(frame):
     # draw a green bounding box around the detected object
     x, y, w, h = cv2.boundingRect(biggest_blue_contour)
     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    print(w, h) # debugging - prints the variable w - width and h - height to the terminal
-    
-    cv2.putText(frame, "%.1fpx" % (w), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-    # %.1f = 1 decimal point, px = px
-    # adds the variable w - width to the screen 
-    # was cv2.putText(frame, "%.2fft" % (w), (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0), 3)
-    
-    # display results
-    #cv2.imshow("mask", blue_mask)
-    #cv2.imshow("blue_res", blue_res)
-
-
+    #print(w, h)
 
     # HSV COLOURSPACE END
 
-
     # DISTANCE BEGIN
-def distance_to_camera(knownWidth, focallength, perWidth):
-    # calculate and return the distance from the object to the camera
-    return (knownWidth * focallength) / perWidth
+
+    # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
+    KNOWN_DISTANCE = 100
+    Z = KNOWN_DISTANCE
+    # initialise the know object width, which is 50mm or 1.968504 inches
+    KNOWN_WIDTH = 0.5
+    D = KNOWN_WIDTH
+    # d = width in pixels at 100cm = 30 - recheck if camera position changes
+    d = 30
+
+    f = d*Z/D #f = focallength
+
+    d = w # w is the perceieved width in pixels calculated by OpenCV Contours
+
+    Z = D*f/d
+    print(w, "px")
+
+    cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    # %.1f = 1 decimal point, px = px
+    # adds the variable w - width to the screen
+    # was cv2.putText(frame, "%.2fft" % (w), (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0), 3)
+
+    #cv2.imshow("mask", blue_mask)
+    #cv2.imshow("blue_res", blue_res)
 
 main()
 cap.release()
