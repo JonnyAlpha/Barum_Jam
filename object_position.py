@@ -79,8 +79,6 @@ def find_blue(frame):
     print("pixel width =", w)
 
     cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-
-
     # %.1f = 1 decimal point, px = px
     # adds the variable w - width to the screen
 
@@ -107,8 +105,10 @@ def find_blue(frame):
     # print current 'x' position
     drive = ""
     print("current x posn = ",cx)
+    # check distance
     if Z > 30:
         print("navigating to target")
+        # insert driving forward
         if cx > 320:
             print("steer left")
             drive = "steer left"
