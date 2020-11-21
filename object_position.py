@@ -3,6 +3,7 @@
 # using a blue ball of 50mm diameter
 # Uses triangular similarity to calculate distance
 # Uses OpenCv Moments to calculate position
+# Incorporated rudimentary steering
 
 import numpy as np
 import cv2
@@ -75,7 +76,7 @@ def find_blue(frame):
     d = w # w is the perceieved width in pixels calculated by OpenCV Contours
 
     Z = D*f/d
-    print(w, "px")
+    print("pixel width =", w)
 
     cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
 
@@ -103,8 +104,24 @@ def find_blue(frame):
 
     # STEERING START
 
-    # print current position
-    print("current posn (x, y) = ", (cx, cy))
+    # print current 'x' position
+    drive = ""
+    print("current x posn = ",cx)
+    if Z > 30:
+        print("navigating to target")
+        if cx > 320:
+            print("steer left")
+            drive = "steer left"
+        elif cx < 320:
+            print("steer right")
+            drive = "steer right"
+        else:
+            print("straight ahead")
+            drive = "stright ahead"
+    else:
+        print("target in range")
+        drive = "target in range"
+    cv2.putText(frame, drive, (50,50),cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
 
     # STEERING END
 
