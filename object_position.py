@@ -117,7 +117,7 @@ def find_blue(frame):
             drive = "steer right"
         else:
             print("straight ahead")
-            drive = "stright ahead"
+            drive = "straight ahead"
     else:
         print("target in range")
         drive = "target in range"
