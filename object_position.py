@@ -1,8 +1,8 @@
 # finding the (x, y) position and (z) distance of an object of known size
 # use multicolour_detect.py to establish hsv numbers for each colour
 # using a blue ball of 50mm diameter
-# Uses triangular similarity to calculate (z) distance
-# Uses OpenCv Moments to calculate (x,y) position
+# Uses triangular similarity to calculate distance
+# Uses OpenCv Moments to calculate position
 
 import numpy as np
 import cv2
@@ -11,7 +11,7 @@ def main():
     # capture the video frames (0) = first camera
     cap = cv2.VideoCapture(0)
 
-    # define the video capture frame size, keeps it low res to save CPU
+    # define the video capture frame size
     cap.set(3, 640) # width
     cap.set(4, 480) # height
 
@@ -24,7 +24,6 @@ def main():
 
         # output the results in windows
         cv2.imshow("frame", frame)
-
 
         key = cv2.waitKey(1)
         if key == 27:
@@ -39,10 +38,8 @@ def find_blue(frame):
     lower__blue = np.array([88, 131, 0], dtype=np.uint8)
     upper_blue = np.array([145, 255, 255], dtype=np.uint8)
 
-
     #setup the mask to detect only specified colour
     blue_mask = cv2.inRange(blue, lower__blue, upper_blue)
-
 
     # setup the results to display
     blue_res = cv2.bitwise_and(frame, frame, mask=blue_mask)
@@ -62,12 +59,12 @@ def find_blue(frame):
 
     # HSV COLOURSPACE END
 
-    # DISTANCE BEGIN
+    # DISTANCE (z) BEGIN
 
-    # initialise the known distance from the camera to the object which is 100cm 
+    # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
     KNOWN_DISTANCE = 100
     Z = KNOWN_DISTANCE
-    # initialise the know object width, which is 0.5cm
+    # initialise the know object width, which is 50mm or 1.968504 inches
     KNOWN_WIDTH = 0.5
     D = KNOWN_WIDTH
     # d = width in pixels at 100cm = 30 - recheck if camera position changes
@@ -82,7 +79,8 @@ def find_blue(frame):
 
     cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
 
-    # %.1f = 1 decimal point, cm = unit of measurement to be displayed
+
+    # %.1f = 1 decimal point, px = px
     # adds the variable w - width to the screen
 
     # POSITION (x, y) BEGIN
@@ -101,6 +99,14 @@ def find_blue(frame):
     cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
     cv2.putText(frame, "centroid", (cx - 25, cy - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
+    # POSITION (x, y) END
+
+    # STEERING START
+
+    # print current position
+    print("current posn (x, y) = ", (cx, cy))
+
+    # STEERING END
 
     #cv2.imshow("mask", blue_mask)
     #cv2.imshow("blue_res", blue_res)
