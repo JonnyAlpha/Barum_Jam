@@ -1,10 +1,8 @@
 # finding the (x, y) position and (z) distance of an object of known size
 # use multicolour_detect.py to establish hsv numbers for each colour
 # using a blue ball of 50mm diameter
-# Uses triangular similarity to calculate distance
-# Uses OpenCv Moments to calculate position
-
-
+# Uses triangular similarity to calculate (z) distance
+# Uses OpenCv Moments to calculate (x,y) position
 
 import numpy as np
 import cv2
@@ -13,7 +11,7 @@ def main():
     # capture the video frames (0) = first camera
     cap = cv2.VideoCapture(0)
 
-    # define the video capture frame size
+    # define the video capture frame size, keeps it low res to save CPU
     cap.set(3, 640) # width
     cap.set(4, 480) # height
 
@@ -23,7 +21,6 @@ def main():
         find_blue(frame)
         #find_red(frame)
         #find_green(frame)
-
 
         # output the results in windows
         cv2.imshow("frame", frame)
@@ -67,10 +64,10 @@ def find_blue(frame):
 
     # DISTANCE BEGIN
 
-    # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
+    # initialise the known distance from the camera to the object which is 100cm 
     KNOWN_DISTANCE = 100
     Z = KNOWN_DISTANCE
-    # initialise the know object width, which is 50mm or 1.968504 inches
+    # initialise the know object width, which is 0.5cm
     KNOWN_WIDTH = 0.5
     D = KNOWN_WIDTH
     # d = width in pixels at 100cm = 30 - recheck if camera position changes
@@ -85,8 +82,7 @@ def find_blue(frame):
 
     cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
 
-
-    # %.1f = 1 decimal point, px = px
+    # %.1f = 1 decimal point, cm = unit of measurement to be displayed
     # adds the variable w - width to the screen
 
     # POSITION (x, y) BEGIN
