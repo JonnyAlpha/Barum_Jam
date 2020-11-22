@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+# coding: Latin
+# first test incorporating MonsterBorg driving and my object detection
+
+# Load library functions we want
+import numpy as np
+import cv2
+import sys
+import ThunderBorg3
+
+# START ThunderBorg
+# Setup the ThunderBorg
+TB = ThunderBorg3.ThunderBorg() # Edited 01 Mar 2018 Bill Harvey - changed ThunderBorg to ThunderBorg3
+# TB.i2cAddress = 0x15                  # Uncomment and change the value if you have changed the board address
+TB.Init()
+if not TB.foundChip:
+    boards = ThunderBorg3.ScanForThunderBorg()
+    if len(boards) == 0:
+        print('No ThunderBorg found, check you are attached :)')
+    else:
+        print('No ThunderBorg at address %02X, but we did find boards:' % (TB.i2cAddress))
+        for board in boards:
+            print('    %02X (%d)' % (board, board))
+        print('If you need to change the IÃÂ²C address change the setup line so it is correct, e.g.')
+        print('TB.i2cAddress = 0x%02X' % (boards[0]))
+    sys.exit()
+TB.SetCommsFailsafe(False)
+
+# Power settings
+voltageIn = 12.0                        # Total battery voltage to the ThunderBorg
+voltageOut = 12.0 * 0.95                # Maximum motor voltage, we limit it to 95% to allow the RPi to get uninterrupted power
+
+# Auto drive settings
+autoMaxPower = 0.5  # Maximum output in automatic mode - Bill Harvey 03/03/18 was 1.0
+autoMinPower = 0.2  # Minimum output in automatic mode
+
+# Setup the power limits
+if voltageOut > voltageIn:
+    maxPower = 1.0
+else:
+    maxPower = voltageOut / float(voltageIn)
+    autoMaxPower *= maxPower
+
+def main():
+    # capture the video frames (0) = first camera
+    cap = cv2.VideoCapture(0)
+
+    # define the video capture frame size
+    cap.set(3, 640) # width
+    cap.set(4, 480) # height
+
+    while True:
+        _, frame = cap.read()
+        frame = cv2.flip(frame, 0)
+        find_blue(frame)
+        #find_red(frame)
+        #find_green(frame)
+
+        # output the results in windows
+        cv2.imshow("frame", frame)
+
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+
+# HSV COLOURSPACE START
+def find_blue(frame):
+    # convert captured image to HSV colour space to detect colours
+    blue = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    #define range of colour to detect
+    lower__blue = np.array([88, 131, 0], dtype=np.uint8)
+    upper_blue = np.array([145, 255, 255], dtype=np.uint8)
+
+    #setup the mask to detect only specified colour
+    blue_mask = cv2.inRange(blue, lower__blue, upper_blue)
+
+    # setup the results to display
+    blue_res = cv2.bitwise_and(frame, frame, mask=blue_mask)
+
+    # detect the contours of the shapes and keep the largest
+    blue_contours, hierarchy  = cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    #_, blue_contours, hierarchy = cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    contour_sizes = [(cv2.contourArea(blue_contours), blue_contours) for blue_contours in blue_contours]
+    biggest_blue_contour = max(contour_sizes, key=lambda x: x[0])[1]
+
+    # draw a green bounding box around the detected object
+    x, y, w, h = cv2.boundingRect(biggest_blue_contour)
+    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    #print(w, h)
+
+    # HSV COLOURSPACE END
+
+    # DISTANCE (z) BEGIN
+
+    # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
+    KNOWN_DISTANCE = 100
+    Z = KNOWN_DISTANCE
+    # initialise the know object width, which is 50mm or 1.968504 inches
+    KNOWN_WIDTH = 0.5
+    D = KNOWN_WIDTH
+    # d = width in pixels at 100cm = 30 - recheck if camera position changes
+    d = 30
+
+    f = d*Z/D #f = focallength
+
+    d = w # w is the perceieved width in pixels calculated by OpenCV Contours
+
+    Z = D*f/d
+    print("pixel width =", w)
+
+    cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    # %.1f = 1 decimal point, px = px
+    # adds the variable w - width to the screen
+
+    # POSITION (x, y) BEGIN
+
+    # convert image to binary
+    ret, thresh = cv2.threshold(blue_mask, 127,255,0)
+
+    # calculate moments of the binary image
+    M = cv2.moments(thresh)
+
+    # calculate the x, y coordinates of the centre
+    cx = int(M["m10"] / M["m00"])
+    cy = int(M["m01"] / M["m00"])
+
+    # put text and highlight the centre
+    cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
+    cv2.putText(frame, "centroid", (cx - 25, cy - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+    # POSITION (x, y) END
+
+    # STEERING START
+    # set ThunderBorg global variable
+    global TB
+    # ThunderBorg motor commands
+    driveLeft = 0.0
+    driveRight = 0.0
+
+    # print current 'x' position
+    print("current x posn = ",cx)
+
+
+
+    # check distance
+    if Z > 30:
+        print("navigating to target")
+        # insert driving forward
+        drive =""
+        if cx > 320:
+            print("steer left")
+            drive = "Left"
+            driveLeft = 0.5
+            driveRight = 1.0
+        elif cx < 320:
+            print("steer right")
+            drive = "Right"
+            driveLeft = 1.0
+            driveRight = 0.5
+        else:
+            print("straight ahead")
+            drive = "Straight"
+            driveLeft = 1.0
+            driveRight = 1.0
+    else:
+        print("target in range")
+        drive = "target in range"
+    cv2.putText(frame, drive, (50,50),cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    TB.SetMotor1(driveLeft)
+    TB.SetMotor2(driveRight)
+    # STEERING END
+
+    #cv2.imshow("mask", blue_mask)
+    #cv2.imshow("blue_res", blue_res)
+try:
+    print('Press CTRL+C to quit')
+    TB.MotorsOff()
+    TB.SetLedShowBattery(True)
+    # Loop indefinitely until we are no longer running
+    while running:
+        # Wait for the interval period
+        # You could have the code do other work in here 🙂
+        sleep(1.0)
+        # Disable all drives
+    TB.MotorsOff()
+except KeyboardInterrupt:
+    # CTRL+C exit, disable all drives
+    print('\nUser shutdown')
+    TB.MotorsOff()
+except:
+    # Unexpected error, shut down!
+    e = sys.exc_info()[0]
+    print
+    print(e)
+    print('\nUnexpected error, shutting down!')
+    TB.MotorsOff()
+main()
+cap.release()
+cv2.destroyAllWindows()
+TB.MotorsOff()
+TB.SetLedShowBattery(False)
+TB.SetLeds(0,0,0)
+print('Program terminated.')
