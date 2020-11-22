@@ -7,5 +7,11 @@ To identify the objects we will be using OpenCV HSV and to calculate the object 
 
 # Note on files
 
-multicolour_detect.py - script used to calibrate hsv detection
+README.md - This file
+centroid_blue.py - script exploring the use of centroids 
+colour_detect_boxed.py - script esploring addinig a bounding box around an identified object
+colour_detect_contours.py - script exploring the use of contours to identify the edges of an object
 hsv_detect.py - script to calibrate hsv detection
+multicolour_detect.py - script used to calibrate hsv detection
+object_distance.py - script utilising OpenCV Moments pixel height to calculate distances
+object_position.py - script utilising OpenCV Moments object coordinates to calculate relative position
