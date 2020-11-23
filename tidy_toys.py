@@ -12,17 +12,16 @@ import threading
 import picamera
 import picamera.array
 
-#Global variables
+#GLobal variables
 global TB
-global cap
+#global cap #not required
 global colour
 global image
 global camera
 global running
 
-# assign some values 
 running = True
-debug = False #set to true to step thorugh certain parts of the code
+debug = False
 colour = "blue" #set the target colour (this will be expanded into a target selection sequence for all three colours)
 
 # Setup the ThunderBorg
@@ -47,8 +46,8 @@ voltageIn = 14.6                        # Total battery voltage to the ThunderBo
 voltageOut = 14.6 * 0.95                # Maximum motor voltage, we limit it to 95% to allow the RPi to get uninterrupted power
 
 # Camera settings
-imageWidth = 640  # Camera image width - may reduce to increase processing
-imageHeight = 480  # Camera image height - may reduce to increase processing
+imageWidth = 640  # Camera image width
+imageHeight = 480  # Camera image height
 frameRate = 3  # Camera image capture frame rate
 
 # Auto drive settings
@@ -106,7 +105,6 @@ class StreamProcessor(threading.Thread):
 
         # convert captured image to HSV colour space to detect colours
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-
         if debug:
             # View the converted image seen by the camera.
             cv2.imshow('hsv', hsv)
@@ -118,6 +116,7 @@ class StreamProcessor(threading.Thread):
         # Green is between 50 and 75
         # Blue is between 20 and 35
         # Yellow is... to be found!
+
 
         if colour == "red":
 
@@ -171,8 +170,8 @@ class StreamProcessor(threading.Thread):
         biggest_contour = max(contour_sizes, key=lambda x: x[0])[1]
 
         # draw a green bounding box around the detected object
-        #x, y, w, h = cv2.boundingRect(biggest_contour)
-        #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        x, y, w, h = cv2.boundingRect(biggest_contour)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
         KNOWN_DISTANCE = 100
@@ -185,7 +184,7 @@ class StreamProcessor(threading.Thread):
 
         f = d*Z/D #f = focallength
 
-        #d = w # w is the perceieved width in pixels calculated by OpenCV Contours
+        d = w # w is the perceieved width in pixels calculated by OpenCV Contours
 
         Z = D*f/d
         #print("pixel width =", w)
@@ -219,7 +218,6 @@ class StreamProcessor(threading.Thread):
         foundY = -1
         for contour in contours:
             x, y, w, h = cv2.boundingRect(biggest_contour)
-            #x, y, w, h = cv2.boundingRect(contour)
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cx = x + (w / 2)
             cy = y + (h / 2)
@@ -297,6 +295,7 @@ class ImageCapture(threading.Thread):
             else:
                 yield processor.stream
                 processor.event.set()
+
 # Startup sequence
 print('Setup camera')
 
