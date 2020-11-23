@@ -171,7 +171,7 @@ class StreamProcessor(threading.Thread):
 
         # draw a green bounding box around the detected object
         x, y, w, h = cv2.boundingRect(biggest_contour)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
         KNOWN_DISTANCE = 100
