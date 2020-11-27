@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: Latin
-# second attempt at incorporating MonsterBorg driving and my object detection
+# Incorporating MonsterBorg driving and my object detection
+# Added error check to prevent program crashing when target not seen
 
 # Load library functions we want
 import numpy as np
@@ -12,14 +13,14 @@ import threading
 import picamera
 import picamera.array
 
-#GLobal variables
+# Set GLobal variables
 global TB
-#global cap #not required
 global colour
 global image
 global camera
 global running
 
+# define some variables
 running = True
 debug = False
 colour = "blue" #set the target colour (this will be expanded into a target selection sequence for all three colours)
@@ -56,7 +57,6 @@ autoMinPower = 0.2  # Minimum output in automatic mode
 autoMinArea = 10  # Smallest target to move towards
 autoMaxArea = 10000  # Largest target to move towards
 autoFullSpeedArea = 300  # Target size at which we use the maximum allowed output
-
 
 # Setup the power limits
 if voltageOut > voltageIn:
@@ -167,73 +167,81 @@ class StreamProcessor(threading.Thread):
 
         # keep the largest contours
         contour_sizes = [(cv2.contourArea(contours), contours) for contours in contours]
-        biggest_contour = max(contour_sizes, key=lambda x: x[0])[1]
 
-        # draw a green bounding box around the detected object
-        x, y, w, h = cv2.boundingRect(biggest_contour)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        # initialise the known distance from the camera to the object which is 300mm 11.81102 inches
-        KNOWN_DISTANCE = 100
-        Z = KNOWN_DISTANCE
-        # initialise the know object width, which is 50mm or 1.968504 inches
-        KNOWN_WIDTH = 0.5
-        D = KNOWN_WIDTH
-        # d = width in pixels at 100cm = 30 - recheck if camera position changes
-        d = 30
-
-        f = d*Z/D #f = focallength
-
-        d = w # w is the perceieved width in pixels calculated by OpenCV Contours
-
-        Z = D*f/d
-        #print("pixel width =", w)
-
-        cv2.putText(image, "%.1fcm" % (Z), (image.shape[1] - 400, image.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-        # %.1f = 1 decimal point, px = px
-        # adds the variable w - width to the screen
-
-        # POSITION (x, y) BEGIN
-
-        # convert image to binary
-        ret, thresh = cv2.threshold(imrange, 127,255,0)
-
-        # calculate moments of the binary image
-        M = cv2.moments(thresh)
-
-        # calculate the x, y coordinates of the centre
-        cx = int(M["m10"] / M["m00"])
-        cy = int(M["m01"] / M["m00"])
-
-        # put text and highlight the centre
-        cv2.circle(image, (cx, cy), 5, (255, 255, 255), -1)
-        cv2.putText(image, "centroid", (cx - 25, cy - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-        cv2.imshow("image", image)
-        cv2.waitKey(1)
-        # Go through each contour
-        # using area to determine if ball is seen or not
-        foundArea = -1
-        foundX = -1
-        foundY = -1
-        for contour in contours:
+        # start error check if target not found - otherwise program crashes
+        if len(contour_sizes) > 0:
+            biggest_contour = max(contour_sizes, key=lambda x: x[0])[1]
+            # draw a green bounding box around the detected object
             x, y, w, h = cv2.boundingRect(biggest_contour)
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cx = x + (w / 2)
-            cy = y + (h / 2)
-            area = w * h
-            if foundArea < area:
-                foundArea = area
-                foundX = cx
-                foundY = cy
-        if foundArea > 0:
-            ball = [foundX, foundY, foundArea]
-        else:
-            ball = None
-        # Set drives or report ball status
-        self.SetSpeedFromBall(ball)
 
-    # Set the motor speed from the ball position
+            # set the known distance from the camera to the object
+            KNOWN_DISTANCE = 100
+            Z = KNOWN_DISTANCE
+
+            # set the known object width
+            KNOWN_WIDTH = 0.5
+            D = KNOWN_WIDTH
+            # d = width in pixels at 100cm = 30 - recheck if camera position changes
+            d = 30
+
+            f = d*Z/D #f = focallength
+
+            d = w # w is the perceieved width in pixels calculated by OpenCV Contours
+
+            Z = D*f/d
+            #print("pixel width =", w)
+
+            cv2.putText(image, "%.1fcm" % (Z), (image.shape[1] - 400, image.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+            # %.1f = 1 decimal point, px = px
+            # adds the variable w - width to the screen
+
+            # HSV COLOURSPACE END
+
+            # POSITION (x, y) BEGIN
+
+            # convert image to binary
+            ret, thresh = cv2.threshold(imrange, 127,255,0)
+
+            # calculate moments of the binary image
+            M = cv2.moments(thresh)
+
+            # calculate the x, y coordinates of the centre
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+
+            # put text and highlight the centre
+            cv2.circle(image, (cx, cy), 5, (255, 255, 255), -1)
+            cv2.putText(image, "centroid", (cx - 25, cy - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+            cv2.imshow("image", image)
+            cv2.waitKey(1)
+            # Go through each contour
+            # using area to determine if ball is seen or not
+            foundArea = -1
+            foundX = -1
+            foundY = -1
+            for contour in contours:
+                x, y, w, h = cv2.boundingRect(biggest_contour)
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cx = x + (w / 2)
+                cy = y + (h / 2)
+                area = w * h
+                if foundArea < area:
+                    foundArea = area
+                    foundX = cx
+                    foundY = cy
+                if foundArea > 0:
+                    ball = [foundX, foundY, foundArea]
+                else:
+                    ball = None
+
+            # Set drives or report ball status
+            self.SetSpeedFromBall(ball)
+            # Set the motor speed from the ball position
+        else:
+            print("target not seen")
+
     def SetSpeedFromBall(self, ball):
         global TB
         driveLeft = 0.0
