@@ -2,6 +2,8 @@
 # coding: Latin
 # Incorporating MonsterBorg driving and my object detection
 # Added error check to prevent program crashing when target not seen
+# Changed name to tidy_toys_piborg_version.py to define this as the versions created using lots of code 'borrowed' from a PiBorg example
+# to enable the creation of new custom version using my own code
 
 # Load library functions we want
 import numpy as np
