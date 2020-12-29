@@ -42,3 +42,7 @@ the object position, we will be using OpenCV Moments.
 - `object_position.py`
 
     A script utilising OpenCV Moments object coordinates to calculate relative position
+    
+- `tidy_toys.py`
+    
+    The actual script for the Tidy Up The Toys challenge.
