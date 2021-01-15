@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-# 29Dec20 2020 Re-Work of attempt at complete re-write of working program for the Tidy up the Toys PiWars 2021 challenge
+#
+# Re-Work of attempt at complete re-write of working program for the Tidy up the Toys PiWars 2021 challenge
+# Last updated:
+# 15 Jan 20
 
-# BUGS / ISSUES:
+# BUGS / ISSUES (Open):
 # Uses global variables throughout, need to switch to classes
+# Motor functions have been added but are very crude, the video output and program has become very laggy
+# Need to move the Motor Driving into its own section and use variables to update the control
+# Need to incorporate PID to the motor driving to illiminate errors
+
+# BUGS / ISSUES (Closed):
 # Program finds and in theoary picks ups all toys, but when last toy has been collected
-# it continues to search for the last target toy? - FIxed
+# it continues to search for the last target toy? - Fixed
+
 
 # To Do:
 # Need to add error checking if nothing seen - completed
@@ -18,14 +27,18 @@
 # variables image_width and image_height.
 # The program the enters a While loop that reads the first video frame, it then calls the select_target() function.
 # The select_target() function looks at the list of toys to see which toys need to be collected, it selects the next available toy as the target
-# Now back in the WHile loop, a series of if and elif conditional statements and selects appropriate OpenCV function,
-# find_blue(), find_green(), find_red(), based on the target selected by select_target().
-# From within these 'find_colour()' functions, distance() and position() are called, these functions determine the distance and positoon of the target
-# Back in main_loop() drive_to_toyl()uses the distance and position values stored in 'Z' and 'cx, cy, to determine which way to drive to the selected target
-# When the target is close enough and central drive_to_toy() calls the pick_up_toy() function. This will operate the grabber (but may also chec an IR sensor
-# if we install one to confirm that the toy is indeed within the jaws of the grabber.
-# The position and steering information are written to the video frames using OpenCV and the fram is updated using cv2.imshow() in the main_loop().
+# Now back in the While loop, a series of if and elif conditional statement selects the appropriate OpenCV function,
+# find_blue(), find_green(), find_red(), this is based on the target selected by select_target().
+# From within these 'find_colour()' functions, distance() and position() are called, these functions determine the distance and position of the target
+# Back in main_loop() the next function called is drive_to_toyl(), this uses the distance and position values stored in 'Z' and 'cx, cy, to determine which way to drive to the selected target
+#
+# When the target is close enough and in a central position in relation to the robot the drive_to_toy() function calls the pick_up_toy() function.
+# pick_up_toy() function operates the grabber to pick up the toy
+# May also check an IR sensor if fitted, to confirm that the toy is indeed within the jaws of the grabber.
+#
+# The position and steering information are written to the video frames using OpenCV and the frame is updated and displayed using cv2.imshow() in the main_loop().
 
+# Driving functions have now been added to drive the robots motors
 # The next progression will be to drive to the Drop Zone, once the toy is picked up. The Drop Zone will need to be identified by Arrows or an Accru Marker.
 # Once in the 'Drop Zone', the toy will need to be dropped and then the next toy selected as a target.
 # This should all be repeated until all all toys are delivered to the Drop Zone.
@@ -34,6 +47,7 @@
 import cv2
 import numpy as np
 from time import sleep
+import ThunderBorg3
 
 # declare GLOBAL variable
 global TB #ThunderBorg
@@ -47,18 +61,47 @@ global toys_collected
 global frame
 global Z
 global cx, cy
+global driveLeft, driveRight
 
 # define variables
 Known_Distance = 100 #100cm
 Known_Width = 5 #5cm
-image_width = 640
-image_height = 480
+image_width = 320
+image_height = 240
 toys = ["blue", "green", "red"]
 target_toy = None  # allocates a none value
 toys_collected = [] # allocates a null value to the list
+driveLeft = 0 #debugging, should be 0
+driveRight = 0 #debugging, should be 0
+
+# Setup the ThunderBorg Motor Driver board
+TB = ThunderBorg3.ThunderBorg()
+TB.Init()
+if not TB.foundChip:
+    boards = ThunderBorg3.ScanForThunderBorg()
+    if len(boards) == 0:
+        print('No ThunderBorg found, check you are attached :)')
+    else:
+        print('No ThunderBorg at address %02X, but we did find boards:' % (TB.i2cAddress))
+        for board in boards:
+            print("    %02X (%d) " % (board, board))
+        print('If you need to change the Iï¿½C address change the setup line so it is correct, e.g.')
+        print('TB.i2cAddress = 0x%02X' % (boards[0]))
+    sys.exit()
+# Ensure the communications failsafe has been enabled!
+failsafe = False
+for i in range(5):
+    TB.SetCommsFailsafe(True)
+    failsafe = TB.GetCommsFailsafe()
+    if failsafe:
+        break
+if not failsafe:
+    print('Board %02X failed to report in failsafe mode!' % (TB.i2cAddress))
 
 def startup():
     print("Starting up")
+    TB.SetMotor1(driveRight) #debugging
+    TB.SetMotor2(driveLeft)  #debugging
 
 def select_target():
     global toys
@@ -228,7 +271,7 @@ def distance(w, frame):
     print("pixel width =", w)
 
 
-    cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     # %.1f = 1 decimal point, px = px
     # adds the variable w - width to the screen
 
@@ -257,10 +300,7 @@ def position(mask, frame):
 
     # POSITION (x, y) END
 
-def find_drop_zone():
-    print("Find Drop Zone")
-
-def drive_to_toy(frame, target_toy):
+def drive_to_toy(frame, target_toy, driveLeft, driveRight):
     #global target_toy
     #global toys_collected
 
@@ -272,30 +312,45 @@ def drive_to_toy(frame, target_toy):
     if Z > 10:
         print("Navigating to target")
         # insert driving forward
-        if cx > 320:
+        if cx > 160:
             print("steer left")
             drive = "steer left"
             #Enter motor controls here
-        elif cx < 320:
+            TB.SetMotor1(0.25)
+            TB.SetMotor2(0.5)
+            driveLeft = 0.25
+            driveRight = 0.5
+        elif cx < 160:
             print("steer right")
             drive = "steer right"
             # Enter motor controls here
+            TB.SetMotor1(0.5)
+            TB.SetMotor2(0.25)
+            driveLeft = 0.5
+            driveRight = 0.25
         else:
             print("straight ahead")
             drive = "straight ahead"
             # Enter motor controls here
+            TB.SetMotor1(0.5)
+            TB.SetMotor2(0.5)
+            driveLeft = 0.5
+            driveRight = 0.5
     elif Z < 10:
         print("target in range")
         drive = "target in range"
 
-        if cx > 290 and cx < 350:
+        if cx > 110 and cx < 220:
+            TB.SetMotor1(0)
+            TB.SetMotor2(0)
+            driveLeft = 0
+            driveRight = 0
             pick_up_toy(target_toy, toys_collected)
 
-    cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return driveLeft, driveRight
 
 def pick_up_toy(target_toy, toys_collected):
-    #global toys_collected
-    #global target_toy
     print("Picking up toy")
     sleep(2)
     print(target_toy) # test to see if target_toy contains a value?
@@ -307,12 +362,20 @@ def pick_up_toy(target_toy, toys_collected):
         target_toy = None
     else:
         print("Toys remaining", toys)
+        find_drop_zone()
     sleep(2)
+
+def find_drop_zone():
+    print("Searching for Drop Zone")
+    # Need OpenCV code here to find Drop Zone markers, poss two Arrows
+    # Insert Acuro Marker finding routine here, probably start by reversing and turning left, to face the Drop Zone
+
+
 
 def put_down_toy():
     print("Put down toy")
 
-def main_loop():
+def main_loop(driveLeft, driveRight):
     global toys_collected
     global target_toy
     # capture the video frames (0) = first camera
@@ -322,14 +385,14 @@ def main_loop():
     cap.set(3, image_width) # set as a global variable
     cap.set(4, image_height) # set as a global variable
 
-    #target_toy = random.choice(toys)
-    #print("Random first toy selected is:", target_toy)
-    #sleep(2)
+    # Insert initial driving to turn robot to face toys
+
     while True:
         #print("Toys collected so far:", toys_collected)
         #sleep(0.25)
 
         _, frame = cap.read()
+        frame = cv2.flip(frame, 0) #flips the video 180 degrees
 
         select_target()
 
@@ -348,7 +411,13 @@ def main_loop():
             break
 
         if target_toy:
-            drive_to_toy(frame, target_toy)
+            drive_to_toy(frame, target_toy, driveLeft, driveRight)
+            # Set the motors to the new speeds
+            print(driveLeft)
+            print(driveRight)
+
+            #TB.SetMotor1(driveRight)
+            #TB.SetMotor2(driveLeft)
 
         else:
             break
@@ -356,15 +425,24 @@ def main_loop():
 
         cv2.imshow("frame", frame)
 
+        # Set the motors to the new speeds
+        #TB.SetMotor1(driveRight)
+        #TB.SetMotor2(driveLeft)
+
+
         key = cv2.waitKey(1)
         if key == 27:
             break
 
     cap.release()
     cv2.destroyAllWindows()
+    TB.MotorsOff()
+    TB.SetCommsFailsafe(False)
+    TB.SetLedShowBattery(False)
+    TB.SetLeds(0,0,0)
 
 def main():
     startup()
-    main_loop()
+    main_loop(driveLeft, driveRight)
 
 main()
