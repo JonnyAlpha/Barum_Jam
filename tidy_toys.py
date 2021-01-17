@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 #
-# Re-Work of attempt at complete re-write of working program for the Tidy up the Toys PiWars 2021 challenge
+# Bespoke re-write for the Tidy up the Toys PiWars 2021 challenge
 # Last updated:
-# 15 Jan 20
+# 17 Jan 20
 
 # BUGS / ISSUES (Open):
 # Uses global variables throughout, need to switch to classes
 # Motor functions have been added but are very crude, the video output and program has become very laggy
-# Need to move the Motor Driving into its own section and use variables to update the control
-# Need to incorporate PID to the motor driving to illiminate errors
 
 # BUGS / ISSUES (Closed):
-# Program finds and in theoary picks ups all toys, but when last toy has been collected
-# it continues to search for the last target toy? - Fixed
 
-
-# To Do:
+# TO DO:
 # Need to add error checking if nothing seen - completed
 # Need to try and move the distance() and position() functions out of each of the find_colour() functions to follow the
 # principle of Don't Repeat Yourself (DRY).
 # Condense the three find_color() into a single function(), using upper and lower HSV values set as variables
+# Remove the if statements out of the main loop 
+# Need to move the Motor Driving into its own section and use variables to update the control
+# Need to incorporate PID to the motor driving to illiminate errors
+# Function Drive to Toy needs to be renamed driving and be fed variables so that it is generic, regardless of what section of the challenge 
+# the program is currently tackling
+# select_target() should be a generic target selection based on which part of the challenge is currently being tackled
 
 # Explanation of the function / program flow:
 # The first function called by main() is startup, this is where the motor controller and if used, the Pi Camera is set up.
@@ -301,8 +302,13 @@ def position(mask, frame):
     # POSITION (x, y) END
 
 def drive_to_toy(frame, target_toy, driveLeft, driveRight):
+    # 
+    
+    
     #global target_toy
     #global toys_collected
+    
+    
 
     print("Driving to toy")
     print("Distance = ", Z)
