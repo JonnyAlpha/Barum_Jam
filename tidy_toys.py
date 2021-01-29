@@ -5,12 +5,12 @@
 # 23 Jan 20
 
 # BUGS / ISSUES (Open):
-# Crashes if it loses sight of the target
 # Need to try and move the distance() and position() functions out of the find_colour() function
 
 # BUGS / ISSUES (Closed):
 # Uses global variables throughout, now reduced by using return statements to read variable data into and out of functions
 # Motor functions have been added but are very crude, the video output and program has become very laggy
+# Crashes if it loses sight of the target - fixed by adding a try: except: excpetion handling 
 
 # TO DO:
 # Observer a principle of Don't Repeat Yourself (DRY).
@@ -412,33 +412,37 @@ def main_loop():
 
         target_toy = select_target()
         #select_target() # this could be starting position, toys, or drop zone based on what stage of the challenge we are at
+        try:
+            if target_toy:
 
-        if target_toy:
-
-            cx, cy, Z = find_toy(frame, target_toy)
-            #print("Z = ", Z) # For debugging
-            #print("cx, cy = ", cx, cy) # For debugging
-
-
-            #cv2.imshow("frame", frame) # For debugging
-            #key = cv2.waitKey(0) # For debugging
-
-            driveLeft, driveRight = drive_to_toy(frame, target_toy, cx, cy, Z)
-            #if cx > 300 and cx < 340:
-            #    #TB.SetMotor1(0)
-            #    #TB.SetMotor2(0)
-            #    driveLeft = 0
-            #    driveRight = 0
-            #    pick_up_toy(target_toy, toys_collected)
+                cx, cy, Z = find_toy(frame, target_toy)
+                #print("Z = ", Z) # For debugging
+                #print("cx, cy = ", cx, cy) # For debugging
 
 
-            drive_motors(driveLeft, driveRight)
+                #cv2.imshow("frame", frame) # For debugging
+                #key = cv2.waitKey(0) # For debugging
 
-        else:
-            print("No target toy")
-            print("May need to give up here, or enter search mode")
-            search_mode()
-            break
+                driveLeft, driveRight = drive_to_toy(frame, target_toy, cx, cy, Z)
+                #if cx > 300 and cx < 340:
+                #    #TB.SetMotor1(0)
+                #    #TB.SetMotor2(0)
+                #    driveLeft = 0
+                #    driveRight = 0
+                #    pick_up_toy(target_toy, toys_collected)
+
+
+                drive_motors(driveLeft, driveRight)
+
+            else:
+                print("No target toy")
+                print("May need to give up here, or enter search mode")
+                search_mode()
+
+                break
+
+        except:
+            print("nothing found")
 
         # output the results in windows
         cv2.imshow("frame", frame)
@@ -463,4 +467,5 @@ def main():
     main_loop()
 
 main()
+
 
