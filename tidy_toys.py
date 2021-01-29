@@ -2,27 +2,29 @@
 #
 # Bespoke re-write for the Tidy up the Toys PiWars 2021 challenge
 # Last updated:
-# 17 Jan 20
+# 23 Jan 20
 
 # BUGS / ISSUES (Open):
-# Uses global variables throughout, need to switch to classes
-# Motor functions have been added but are very crude, the video output and program has become very laggy
+# Crashes if it loses sight of the target
+# Need to try and move the distance() and position() functions out of the find_colour() function
 
 # BUGS / ISSUES (Closed):
+# Uses global variables throughout, now reduced by using return statements to read variable data into and out of functions
+# Motor functions have been added but are very crude, the video output and program has become very laggy
 
 # TO DO:
-# Need to add error checking if nothing seen - completed
-# Need to try and move the distance() and position() functions out of each of the find_colour() functions to follow the
-# principle of Don't Repeat Yourself (DRY).
+# Observer a principle of Don't Repeat Yourself (DRY).
+#
+# select_target() should be a generic target selection based on which part of the challenge is currently being tackled
+
+# TO DO COMPLETED
 # Condense the three find_color() into a single function(), using upper and lower HSV values set as variables
 # Remove the if statements out of the main loop
 # Need to move the Motor Driving into its own section and use variables to update the control
 # Need to incorporate PID to the motor driving to illiminate errors
 # Function Drive to Toy needs to be renamed driving and be fed variables so that it is generic, regardless of what section of the challenge
-# the program is currently tackling
-# select_target() should be a generic target selection based on which part of the challenge is currently being tackled
 
-# Explanation of the function / program flow:
+# EXPLANATION OF THE PROGRAM FLOW AND FUNCTION
 # The first function called by main() is startup, this is where the motor controller and if used, the Pi Camera is set up.
 # Next the main_loop() function is called, this starts the video capture and sets the image width and height based on the
 # variables image_width and image_height.
@@ -50,30 +52,28 @@ import numpy as np
 from time import sleep
 import ThunderBorg3
 
-# declare GLOBAL variable
+# declare GLOBAL constants (variable)
 global TB #ThunderBorg
 global Known_Distance
 global Known_Width
 global image_width
 global image_height
 global toys
-#global target_toy
-#global toys_collected
 global frame
-global Z
-global cx, cy
+
+# declare golbal variables
 global driveLeft, driveRight
+global toys_collected
 
 # define variables
 Known_Distance = 100 #100cm
 Known_Width = 5 #5cm
-image_width = 320
-image_height = 240
+image_width = 640
+image_height = 480
 toys = ["blue", "green", "red"]
 target_toy = None  # allocates a none value
 toys_collected = [] # allocates a null value to the list
-driveLeft = 0 #debugging, should be 0
-driveRight = 0 #debugging, should be 0
+#debugging = False #set to False to run in normal mode
 
 # Setup the ThunderBorg Motor Driver board
 TB = ThunderBorg3.ThunderBorg()
@@ -107,12 +107,12 @@ def startup():
     # If not safe move to a safe position?
     # If safe to move carry out initial move (reverse, spin 180 degrees) to face the toys
     # move to start position, reverse and turn 180 degrees
-    TB.SetMotor1(-0.5)
-    TB.SetMotor2(-0.5)
-    sleep(0.5)
-    TB.SetMotor1(-0.5)
-    TB.SetMotor2(0.5)
-    sleep(0.5)
+    #TB.SetMotor1(-0.5)
+    #TB.SetMotor2(-0.5)
+    #sleep(0.5)
+    #TB.SetMotor1(-0.5)
+    #TB.SetMotor2(0.5)
+    #sleep(0.5)
 
     # Return to main()
 
@@ -165,6 +165,10 @@ def find_toy(frame, target_toy):
     # convert captured image to HSV colour space to detect colours
     toy = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
+
+    #cv2.imshow("toy", toy)
+    #key = cv2.waitKey(0)
+
     if target_toy == "blue":
         print("searching for blue toy")
         #define range of colour to detect
@@ -187,8 +191,13 @@ def find_toy(frame, target_toy):
     #setup the mask to detect only specified colour
     mask = cv2.inRange(toy, lower__hsv, upper_hsv)
 
+
+    #cv2.imshow("mask", mask)
+    #key = cv2.waitKey(0)
+
     # setup the results to display
     colour_res = cv2.bitwise_and(frame, frame, mask=mask)
+    #colour_res = cv2.bitwise_and(frame, frame, mask=mask)
 
     # detect the contours of the shapes and keep the largest
     contours, hierarchy  = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -208,12 +217,19 @@ def find_toy(frame, target_toy):
         mask = mask # allocates variable mask with data from blue_mask to be passed to position function
 
 
-        distance(w, frame) # calls distance function and passes 'w' and 'frame'
-        position(mask, frame) # calls position function and passes 'mask' and 'frame'
+        #distance(w, frame) # calls distance function and passes 'w' and 'frame'
+        #position(mask, frame) # calls position function and passes 'mask' and 'frame'
 
-    print("we got here")
+        #show frames
+        #show mask
 
-    #return Z, cy, cx
+        Z = distance(w, frame)
+        cx, cy = position(mask, frame)
+
+        print("we got here")
+        print("Z = ", Z)
+        print("cx, cy = ", cx, cy)
+        return cx, cy, Z
 
 def distance(w, frame):
     #global Z
@@ -236,11 +252,11 @@ def distance(w, frame):
     Z = D*f/d
     print("pixel width =", w)
 
-
     cv2.putText(frame, "%.1fcm" % (Z), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     # %.1f = 1 decimal point, px = px
     # adds the variable w - width to the screen
-    #return Z
+    return Z
+
     # DISTANCE (z) END
 
 def position(mask, frame):
@@ -264,11 +280,12 @@ def position(mask, frame):
     # put text and highlight the centre
     cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
     cv2.putText(frame, "centroid", (cx - 25, cy - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+    return cx, cy
+
     # POSITION (x, y) END
-    #return cx, cy
 
-
-def drive_to_toy(frame, target_toy, cx, cy, z):
+def drive_to_toy(frame, target_toy, cx, cy, Z):
 
     #global target_toy
     #global toys_collected
@@ -278,46 +295,71 @@ def drive_to_toy(frame, target_toy, cx, cy, z):
     print("Position (x, y) = ", cx, cy)
     drive = ""
     # check distance to target
-    if Z > 10:
+    if Z >= 30:
         print("Navigating to target")
         # insert driving forward
-        if cx > 160:
-            print("steer left")
-            drive = "steer left"
+        if cx > 320:
+            print("steering left")
+            drive = "steering left"
             #Enter motor controls here
-            TB.SetMotor1(0.25)
-            TB.SetMotor2(0.5)
+            #TB.SetMotor1(0.25)
+            #TB.SetMotor2(0.5)
             driveLeft = 0.25
-            driveRight = 0.5
-        elif cx < 160:
-            print("steer right")
-            drive = "steer right"
+            driveRight = 0.50
+            cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            cv2.putText(frame, "%.1fpx" % (cx), (frame.shape[1] - 200, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            return driveLeft, driveRight
+
+        elif cx < 320:
+            print("steering right")
+            drive = "steering right"
             # Enter motor controls here
-            TB.SetMotor1(0.5)
-            TB.SetMotor2(0.25)
-            driveLeft = 0.5
+            #TB.SetMotor1(0.5)
+            #TB.SetMotor2(0.25)
+            driveLeft = 0.50
             driveRight = 0.25
+            cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            cv2.putText(frame, "%.1fpx" % (cx), (frame.shape[1] - 200, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            return driveLeft, driveRight
+
         else:
             print("straight ahead")
             drive = "straight ahead"
             # Enter motor controls here
-            TB.SetMotor1(0.5)
-            TB.SetMotor2(0.5)
-            driveLeft = 0.5
-            driveRight = 0.5
-    elif Z < 10:
+            #TB.SetMotor1(0.5)
+            #TB.SetMotor2(0.5)
+            driveLeft = 0.50
+            driveRight = 0.50
+            cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            cv2.putText(frame, "%.1fpx" % (cx), (frame.shape[1] - 200, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+            return driveLeft, driveRight
+
+    else: #was elif Z <= 29:
         print("target in range")
         drive = "target in range"
+        driveLeft = 0
+        driveRight = 0
+        cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+        #cv2.putText(frame, "%.1fpx" % (cx), (frame.shape[1] - 200, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+        return driveLeft, driveRight
 
-        if cx > 110 and cx < 220:
-            TB.SetMotor1(0)
-            TB.SetMotor2(0)
-            driveLeft = 0
-            driveRight = 0
-            pick_up_toy(target_toy, toys_collected)
+    #if cx > 300 and cx < 340:
+    #    TB.SetMotor1(0)
+    #    TB.SetMotor2(0)
+    #    driveLeft = 0
+    #    driveRight = 0
 
-    cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-    return driveLeft, driveRight
+    #        pick_up_toy(target_toy, toys_collected)
+
+    #cv2.putText(frame, drive, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    #cv2.putText(frame, "%.1fcm" % (cx), (frame.shape[1] - 400, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    #return driveLeft, driveRight
+
+def search_mode():
+    driveLeft = 0.5
+    sleep(1)
+    driveRight = 0.5
+    sleep(1)
 
 def pick_up_toy(target_toy, toys_collected):
     print("Picking up toy")
@@ -342,6 +384,10 @@ def find_drop_zone():
 def put_down_toy():
     print("Put down toy")
 
+def drive_motors(driveLeft, driveRight):
+    TB.SetMotor1(driveLeft)
+    TB.SetMotor2(driveRight)
+
 def main_loop():
 
     # capture the video frames (0) = first camera
@@ -361,21 +407,37 @@ def main_loop():
         _, frame = cap.read()
         frame = cv2.flip(frame, 0) #flips the video 180 degrees
 
+        #cv2.imshow("frame", frame) # For debugging
+        #key = cv2.waitKey(0) # For debugging
+
         target_toy = select_target()
         #select_target() # this could be starting position, toys, or drop zone based on what stage of the challenge we are at
 
         if target_toy:
 
             cx, cy, Z = find_toy(frame, target_toy)
-            cv2.imshow("frame", frame)
-            key = cv2.waitKey(0)
+            #print("Z = ", Z) # For debugging
+            #print("cx, cy = ", cx, cy) # For debugging
+
+
+            #cv2.imshow("frame", frame) # For debugging
+            #key = cv2.waitKey(0) # For debugging
 
             driveLeft, driveRight = drive_to_toy(frame, target_toy, cx, cy, Z)
+            #if cx > 300 and cx < 340:
+            #    #TB.SetMotor1(0)
+            #    #TB.SetMotor2(0)
+            #    driveLeft = 0
+            #    driveRight = 0
+            #    pick_up_toy(target_toy, toys_collected)
+
+
             drive_motors(driveLeft, driveRight)
 
         else:
             print("No target toy")
             print("May need to give up here, or enter search mode")
+            search_mode()
             break
 
         # output the results in windows
@@ -401,3 +463,4 @@ def main():
     main_loop()
 
 main()
+
