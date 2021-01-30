@@ -4,7 +4,6 @@
 # RC 'fallback' code for the Tidy Up The Toys challenge PiWars 2021.
 # Oringinaly used for PiWars 2018 Golf Course challenge 
 # Amended for PS3 SHAWAN controller mapping
-# 
 
 # Load library functions we want
 import time
@@ -56,7 +55,7 @@ buttonSlow = 5                          # Joystick button number for driving slo
 slowFactor = 0.75                        # Speed to slow to when the drive slowly button is held, e.g. 0.5 would be half speed
 buttonFastTurn = 7                      # Joystick button number for turning fast (R2)
 interval = 0.00                         # Time between updates in seconds, smaller responds faster but uses more processor time
-arm_UpDown = 4                          # Joystick axis to read for up / down position
+grabber_open_close = 4                  # Joystick axis to read for grabber open close position
 
 # Power settings
 voltageIn = 1.48 * 10                    # Total battery voltage to the ThunderBorg
@@ -142,10 +141,10 @@ try:
                 hadEvent = True
             if hadEvent:
                 #Servo control here
-                if joystick.get_axis(arm_UpDown):
-                    # golf arm servo code using right joy
-                    updown = joystick.get_axis(arm_UpDown)
-                    servo4 = updown
+                if joystick.get_axis(grabber_open_close):
+                    # grabber servo using right joy
+                    grabber_open_close = joystick.get_axis(grabber_open_close)
+                    servo4 = grabber_open_close
                     UB.SetServoPosition4(servo4)
                 # Read axis positions (-1 to +1)
                 if axisUpDownInverted:
@@ -169,6 +168,7 @@ try:
                     # Turning right
                     driveRight *= 1.0 - (2.0 * leftRight)
                 # Check for button presses
+                        
                 if joystick.get_button(buttonSlow):
                     driveLeft *= slowFactor
                     driveRight *= slowFactor
