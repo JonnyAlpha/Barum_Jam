@@ -2,27 +2,27 @@
 # coding: Latin-1
 
 # RC 'fallback' code for the Tidy Up The Toys challenge PiWars 2021.
-# Oringinaly used for PiWars 2018 Golf Course challenge 
+# Oringinaly used for PiWars 2018 Golf Course challenge
 # Amended for PS3 SHAWAN controller mapping
-# 
 
 # Load library functions we want
 import time
 import os
 import sys
 import pygame
-import ThunderBorg
-import UltraBorg
+import ThunderBorg3
+import UltraBorg3
 
+global TB
 # Re-direct our output to standard error, we need to ignore standard out to hide some nasty print statements from pygame
 sys.stdout = sys.stderr
 
 # Setup the ThunderBorg
-TB = ThunderBorg.ThunderBorg()
+TB = ThunderBorg3.ThunderBorg()
 #TB.i2cAddress = 0x15                  # Uncomment and change the value if you have changed the board address
 TB.Init()
 if not TB.foundChip:
-    boards = ThunderBorg.ScanForThunderBorg()
+    boards = ThunderBorg3.ScanForThunderBorg()
     if len(boards) == 0:
         print("No ThunderBorg found, check you are attached :)")
     else:
@@ -44,7 +44,7 @@ if not failsafe:
     sys.exit()
 
 # Start the UltraBorg
-UB = UltraBorg.UltraBorg()      # Create a new UltraBorg object
+UB = UltraBorg3.UltraBorg()      # Create a new UltraBorg object
 UB.Init()                       # Set the board up (checks the board is connected)
 
 # Settings for the joystick
@@ -56,7 +56,7 @@ buttonSlow = 5                          # Joystick button number for driving slo
 slowFactor = 0.75                        # Speed to slow to when the drive slowly button is held, e.g. 0.5 would be half speed
 buttonFastTurn = 7                      # Joystick button number for turning fast (R2)
 interval = 0.00                         # Time between updates in seconds, smaller responds faster but uses more processor time
-arm_UpDown = 4                          # Joystick axis to read for up / down position
+grabber_open_close = 4                  # Joystick axis to read for grabber open close position
 
 # Power settings
 voltageIn = 1.48 * 10                    # Total battery voltage to the ThunderBorg
@@ -142,10 +142,10 @@ try:
                 hadEvent = True
             if hadEvent:
                 #Servo control here
-                if joystick.get_axis(arm_UpDown):
-                    # golf arm servo code using right joy
-                    updown = joystick.get_axis(arm_UpDown)
-                    servo4 = updown
+                if joystick.get_axis(grabber_open_close):
+                    # grabber servo using right joy
+                    grabber_open_close = joystick.get_axis(grabber_open_close)
+                    servo4 = grabber_open_close
                     UB.SetServoPosition4(servo4)
                 # Read axis positions (-1 to +1)
                 if axisUpDownInverted:
@@ -169,6 +169,7 @@ try:
                     # Turning right
                     driveRight *= 1.0 - (2.0 * leftRight)
                 # Check for button presses
+
                 if joystick.get_button(buttonSlow):
                     driveLeft *= slowFactor
                     driveRight *= slowFactor
@@ -204,3 +205,4 @@ except KeyboardInterrupt:
     TB.SetLedShowBattery(False)
     TB.SetLeds(0,0,0)
 print
+
