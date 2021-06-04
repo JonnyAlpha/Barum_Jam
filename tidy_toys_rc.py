@@ -58,7 +58,7 @@ def set_speeds(power_left, power_right):
 def stop_motors():
     TB.MotorsOff()
 
-def mixer(yaw, throttle, max_power=100):
+def mixer(yaw, throttle, max_power=1.0):
     """
     Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
     joystick positions to wheel powers is defined, so any changes to how the robot drives should
@@ -83,7 +83,7 @@ def main():
     while True:
         try:
             try:
-                print("Use left and right joysticks to drive")
+                print("Use left joystick to drive and steer")
                 print("Use Controller Square and Controller Circle to open / close grabber")
                 print("Use Controller Triangle and Controller Cross to Lower / Lift grabber")
                 with ControllerResource() as joystick:
