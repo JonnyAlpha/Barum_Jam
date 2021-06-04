@@ -52,29 +52,30 @@ UB.SetServoPosition1(-1.0)  # Test Servo positioning using ultra_gui.py to obtai
 UB.SetServoPosition2(0) # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 
 def set_speeds(power_left, power_right):
-    TB.SetMotor1(power_left)
-    TB.SetMotor2(power_right)
+    TB.SetMotor1(power_left/100)
+    TB.SetMotor2(power_right/100)
 
 def stop_motors():
     TB.MotorsOff()
 
-def mixer(yaw, throttle, max_power=1.0):
+def mixer(yaw, throttle, max_power=100):
     """
     Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
     joystick positions to wheel powers is defined, so any changes to how the robot drives should
     be made here, everything else is really just plumbing.
 
-    :param yaw: 
+    :param yaw:
         Yaw axis value, ranges from -1.0 to 1.0
-    :param throttle: 
+    :param throttle:
         Throttle axis value, ranges from -1.0 to 1.0
-    :param max_power: 
+    :param max_power:
         Maximum speed that should be returned from the mixer, defaults to 100
-    :return: 
+    :return:
         A pair of power_left, power_right integer values to send to the motor driver
     """
-    left = throttle + yaw
-    right = throttle - yaw
+
+    left = throttle - yaw # was +
+    right = throttle + yaw # was -
     scale = float(max_power) / max(1, abs(left), abs(right))
     return int(left * scale), int(right * scale)
 
@@ -83,32 +84,23 @@ def main():
     while True:
         try:
             try:
-                print("Use left joystick to drive and steer")
-                print("Use Controller Square and Controller Circle to open / close grabber")
-                print("Use Controller Triangle and Controller Cross to Lower / Lift grabber")
                 with ControllerResource() as joystick:
                     print("Found a joystick and connected")
                     print(joystick.controls)
-                    # Loop until joystick disconnects 
+                    print("Use left joystick to drive")
+                    print("Use Controller Square and Controller Circle to open / close grabber")
+                    print("Use Controller Triangle and Controller Cross to Lower / Lift grabber")
+                    # Loop until joystick disconnects
                     while joystick.connected:
                         # Get joystick values from the left analogue stick
                         x_axis, y_axis = joystick['lx', 'ly']
+
                         # Get power from mixer function
                         power_left, power_right = mixer(yaw=x_axis, throttle=y_axis)
+
                         # Set motor speeds
                         set_speeds(power_left, power_right)
-                        
-                        # Get joystick values from the left and right joysticks
-                        #left_y = joystick["ly"]
-                        # print("Left Joy")
-                        #right_y = joystick["ry"]
-                        # print("Right Joy")
-                        #driveLeft = left_y
-                        #driveRight = right_y
 
-                        #TB.SetMotor1(driveRight)
-                        #TB.SetMotor2(driveLeft)
-                        
                         # Get a ButtonPresses object containing everything that was pressed since the last iteration of the loop
                         joystick.check_presses()
                         # Print any buttons that were pressed
@@ -119,24 +111,24 @@ def main():
                         presses = joystick.check_presses()
                         servo1 = 0
                         servo2 = 0
-                        
+
                         if joystick.presses.square:
-                            print("Square Pressed")
+                            print("Open Grabber")
                             servo1 = -1.0
                             UB.SetServoPosition1(servo1)
 
                         if joystick.presses.circle:
-                            print("Circle Pressed")
+                            print("Close Grabber")
                             servo1 = -0.23
                             UB.SetServoPosition1(servo1)
 
                         if joystick.presses.triangle:
-                            print("Triangle Pressed")
+                            print("Raise Grabber")
                             servo2 = -1.0
                             UB.SetServoPosition2(servo2)
 
                         if joystick.presses.triangle:
-                            print("Cross Pressed")
+                            print("Lower Grabber")
                             servo2 = -0.23
                             UB.SetServoPosition2(servo2)
 
