@@ -1,8 +1,9 @@
 # Tidy up the Toys - Manual control for driving using left analogue joystick with grabber control
 # Bill Harvey 28 May 2021
-# Last update 04 June 2021
+# Last update 13 June 2021
 
-# Need to add servo control for grabber up and down (once lift mech built)
+# Servo 1 = open / close grabber
+# Servo 2 = raise / lower grabber
 
 from time import sleep
 from approxeng.input.selectbinder import ControllerResource  # Import Approx Eng Controller libraries
@@ -47,7 +48,7 @@ TB.SetLeds(0, 0, 1)
 UB = UltraBorg.UltraBorg()  # Create a new UltraBorg object
 UB.Init()  # Set the board up (checks the board is connected)
 
-# Set servo to centre
+# Set servo start positions 
 UB.SetServoPosition1(-1.0)  # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 UB.SetServoPosition2(0) # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 
@@ -58,7 +59,7 @@ def set_speeds(power_left, power_right):
 def stop_motors():
     TB.MotorsOff()
 
-def mixer(yaw, throttle, max_power=100):
+def mixer(yaw, throttle, max_power=50): #reduced max_power from 100 to 50
     """
     Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
     joystick positions to wheel powers is defined, so any changes to how the robot drives should
@@ -102,10 +103,10 @@ def main():
                         set_speeds(power_left, power_right)
 
                         # Get a ButtonPresses object containing everything that was pressed since the last iteration of the loop
-                        joystick.check_presses()
+                        #joystick.check_presses()
                         # Print any buttons that were pressed
-                        if joystick.has_presses:
-                            print(joystick.presses)
+                        #if joystick.has_presses:
+                        #    print(joystick.presses)
 
                         # Check for button presses since the last loop
                         presses = joystick.check_presses()
@@ -122,22 +123,22 @@ def main():
                             servo1 = -0.23
                             UB.SetServoPosition1(servo1)
 
-                        if joystick.presses.triangle:
+                        if joystick.presses.cross:
                             print("Raise Grabber")
-                            servo2 = -1.0
+                            servo2 = -0/23
                             UB.SetServoPosition2(servo2)
 
                         if joystick.presses.triangle:
                             print("Lower Grabber")
-                            servo2 = -0.23
+                            servo2 = -1.0
                             UB.SetServoPosition2(servo2)
 
-                        if joystick.has_presses:
-                            print(joystick.presses)
-                            servo1_pos = UB.GetServoPosition1()
-                            print("servo 1 = ", servo1_pos)
-                            servo2_pos = UB.GetServoPosition2()
-                            print("servo 2 = ", servo2_pos)
+                        #if joystick.has_presses:
+                        #    print(joystick.presses)
+                        #    servo1_pos = UB.GetServoPosition1()
+                        #    print("servo 1 = ", servo1_pos)
+                        #    servo2_pos = UB.GetServoPosition2()
+                        #    print("servo 2 = ", servo2_pos)
 
                 # Joystick disconnected.....
                 print("Connection to joystick lost")
