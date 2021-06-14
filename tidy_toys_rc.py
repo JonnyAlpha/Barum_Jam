@@ -1,6 +1,6 @@
 # Tidy up the Toys - Manual control for driving using left analogue joystick with grabber control
 # Bill Harvey 28 May 2021
-# Last update 13 June 2021
+# Last update 14 June 2021
 
 # Servo 1 = open / close grabber
 # Servo 2 = raise / lower grabber
@@ -9,7 +9,6 @@ from time import sleep
 from approxeng.input.selectbinder import ControllerResource  # Import Approx Eng Controller libraries
 import ThunderBorg3 as ThunderBorg
 import UltraBorg3 as UltraBorg
-# import os
 import sys
 
 global TB
@@ -29,6 +28,7 @@ if not TB.foundChip:
         print("If you need to change the I2C address change the setup line so it is correct, e.g.")
         print("TB.i2cAddress = 0x%02X" % (boards[0]))
     sys.exit()
+    
 # Ensure the communications failsafe has been enabled!
 failsafe = False
 for i in range(5):
@@ -48,7 +48,7 @@ TB.SetLeds(0, 0, 1)
 UB = UltraBorg.UltraBorg()  # Create a new UltraBorg object
 UB.Init()  # Set the board up (checks the board is connected)
 
-# Set servo start positions 
+# Set servo start positions
 UB.SetServoPosition1(-1.0)  # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 UB.SetServoPosition2(0) # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 
@@ -89,8 +89,8 @@ def main():
                     print("Found a joystick and connected")
                     print(joystick.controls)
                     print("Use left joystick to drive")
-                    print("Use Controller Square and Controller Circle to open / close grabber")
-                    print("Use Controller Triangle and Controller Cross to Lower / Lift grabber")
+                    print("Use Controller Square and Controller Circle to open / close grabber - Servo 1")
+                    print("Use Controller Triangle and Controller Cross to Lower / Lift grabber - Servo 2")
                     # Loop until joystick disconnects
                     while joystick.connected:
                         # Get joystick values from the left analogue stick
@@ -101,12 +101,6 @@ def main():
 
                         # Set motor speeds
                         set_speeds(power_left, power_right)
-
-                        # Get a ButtonPresses object containing everything that was pressed since the last iteration of the loop
-                        #joystick.check_presses()
-                        # Print any buttons that were pressed
-                        #if joystick.has_presses:
-                        #    print(joystick.presses)
 
                         # Check for button presses since the last loop
                         presses = joystick.check_presses()
@@ -125,20 +119,13 @@ def main():
 
                         if joystick.presses.cross:
                             print("Raise Grabber")
-                            servo2 = -0/23
+                            servo2 = -0.23
                             UB.SetServoPosition2(servo2)
 
                         if joystick.presses.triangle:
                             print("Lower Grabber")
                             servo2 = -1.0
                             UB.SetServoPosition2(servo2)
-
-                        #if joystick.has_presses:
-                        #    print(joystick.presses)
-                        #    servo1_pos = UB.GetServoPosition1()
-                        #    print("servo 1 = ", servo1_pos)
-                        #    servo2_pos = UB.GetServoPosition2()
-                        #    print("servo 2 = ", servo2_pos)
 
                 # Joystick disconnected.....
                 print("Connection to joystick lost")
@@ -156,6 +143,5 @@ def main():
             TB.SetCommsFailsafe(False)
             TB.SetLeds(0, 0, 0)
             sys.exit()
-
 
 main()
