@@ -1,9 +1,9 @@
 # Tidy up the Toys - Manual control for driving using left analogue joystick with grabber control
 # Bill Harvey 28 May 2021
-# Last update 14 June 2021
+# Last update 18 June 2021
 
-# Servo 1 = open / close grabber
-# Servo 2 = raise / lower grabber
+# Servo 3 = open / close grabber
+# Servo 4 = raise / lower grabber
 
 from time import sleep
 from approxeng.input.selectbinder import ControllerResource  # Import Approx Eng Controller libraries
@@ -28,7 +28,7 @@ if not TB.foundChip:
         print("If you need to change the I2C address change the setup line so it is correct, e.g.")
         print("TB.i2cAddress = 0x%02X" % (boards[0]))
     sys.exit()
-    
+
 # Ensure the communications failsafe has been enabled!
 failsafe = False
 for i in range(5):
@@ -49,8 +49,8 @@ UB = UltraBorg.UltraBorg()  # Create a new UltraBorg object
 UB.Init()  # Set the board up (checks the board is connected)
 
 # Set servo start positions
-UB.SetServoPosition1(-1.0)  # Test Servo positioning using ultra_gui.py to obtain start position and insert here
-UB.SetServoPosition2(0) # Test Servo positioning using ultra_gui.py to obtain start position and insert here
+UB.SetServoPosition3(0)  # Test Servo positioning using ultra_gui.py to obtain start position and insert here
+UB.SetServoPosition4(0.33) # Test Servo positioning using ultra_gui.py to obtain start position and insert here
 
 def set_speeds(power_left, power_right):
     TB.SetMotor1(power_left/100)
@@ -89,8 +89,8 @@ def main():
                     print("Found a joystick and connected")
                     print(joystick.controls)
                     print("Use left joystick to drive")
-                    print("Use Controller Square and Controller Circle to open / close grabber - Servo 1")
-                    print("Use Controller Triangle and Controller Cross to Lower / Lift grabber - Servo 2")
+                    print("Use Controller Square and Controller Circle to open / close grabber - Servo 3")
+                    print("Use Controller Triangle and Controller Cross to Lower / Lift grabber - Servo 4")
                     # Loop until joystick disconnects
                     while joystick.connected:
                         # Get joystick values from the left analogue stick
@@ -104,28 +104,28 @@ def main():
 
                         # Check for button presses since the last loop
                         presses = joystick.check_presses()
-                        servo1 = 0
-                        servo2 = 0
+                        servo3 = 0
+                        servo4 = 0.33
 
                         if joystick.presses.square:
                             print("Open Grabber")
-                            servo1 = -1.0
-                            UB.SetServoPosition1(servo1)
+                            servo3 = -1.0
+                            UB.SetServoPosition3(servo3)
 
                         if joystick.presses.circle:
                             print("Close Grabber")
-                            servo1 = -0.23
-                            UB.SetServoPosition1(servo1)
+                            servo3 = -0.23
+                            UB.SetServoPosition3(servo3)
 
                         if joystick.presses.cross:
                             print("Raise Grabber")
-                            servo2 = -0.23
-                            UB.SetServoPosition2(servo2)
+                            servo4 = 0.33
+                            UB.SetServoPosition4(servo4)
 
                         if joystick.presses.triangle:
                             print("Lower Grabber")
-                            servo2 = -1.0
-                            UB.SetServoPosition2(servo2)
+                            servo4 = -0.10
+                            UB.SetServoPosition4(servo4)
 
                 # Joystick disconnected.....
                 print("Connection to joystick lost")
